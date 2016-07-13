@@ -2,14 +2,41 @@
 
 namespace CodeProject\Http\Controllers;
 
-use CodeProject\Client;
+use CodeProject\Repositories\ClientRepository;
+use CodeProject\Services\ClientService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 use CodeProject\Http\Requests;
-use CodeProject\Http\Controllers\Controller;
+use Illuminate\Http\Response;
 
 class ClientController extends Controller
 {
+
+    /**
+     * @var ClientRepository
+     */
+    private $repository;
+
+
+    /**
+     * @var ClientService
+     */
+    private $service;
+
+    /**
+     * ClientController constructor.
+     *
+     * @param ClientRepository $repository
+     * @param ClientService    $service
+     */
+    public function __construct(ClientRepository $repository, ClientService $service)
+    {
+
+        $this->repository = $repository;
+        $this->service    = $service;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -17,7 +44,7 @@ class ClientController extends Controller
      */
     public function index()
     {
-        return Client::all();
+        return $this->repository->all();
     }
 
 
@@ -29,7 +56,7 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
-        return Client::create($request->all());
+        return $this->service->create($request->all());
     }
 
     /**
@@ -40,7 +67,7 @@ class ClientController extends Controller
      */
     public function show($id)
     {
-        return Client::find($id);
+        return $this->repository->find($id);
     }
 
 
@@ -53,14 +80,8 @@ class ClientController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $client = Client::find($id);
+        return $this->service->update($id, $request->all());
 
-        if ($client)
-        {
-            $client->fill($request->all());
-            $client->save();
-            return $client;
-        }
     }
 
     /**
@@ -71,6 +92,11 @@ class ClientController extends Controller
      */
     public function destroy($id)
     {
-        Client::find($id)->delete();
+        try {
+            $this->repository->delete($id);
+            return new Response('cliente removido', 200);
+        } catch (ModelNotFoundException $eExeption) {
+            return new Response('cliente não encontrado', 404);
+        }
     }
 }
